@@ -1,0 +1,523 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Mink Software Platform</title>
+<style>
+  /* Layout: monochrome dark workspace. Hairline structure, a bento grid, an example dashboard and quiet motion. */
+  :root {
+    --bg: #070707;
+    --surface: #0f0f0f;
+    --surface-2: #151515;
+    --line: #1f1f1f;
+    --line-2: #2c2c2c;
+    --fg: #f4f4f4;
+    --muted: #8c8c8c;
+    --dim: #5a5a5a;
+    --accent: #ffffff;
+    color-scheme: dark;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Inter", -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    padding-left: max(24px, env(safe-area-inset-left, 0px));
+    padding-right: max(24px, env(safe-area-inset-right, 0px));
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; color: inherit; }
+  .wrap { max-width: 1200px; margin: 0 auto; position: relative; z-index: 1; }
+
+  /* Ambient background: drifting grid and light orbs */
+  .ambient { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+  .ambient::before {
+    content: ""; position: absolute; inset: -50%;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 64px 64px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 20%, #000 0%, transparent 65%);
+    mask-image: radial-gradient(ellipse at 50% 20%, #000 0%, transparent 65%);
+    animation: drift 40s linear infinite;
+    opacity: .7;
+  }
+  .orb {
+    position: absolute; width: 520px; height: 520px; border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.14), transparent 65%);
+    filter: blur(20px);
+  }
+  .orb.a { top: -160px; left: -120px; animation: float 18s ease-in-out infinite; }
+  .orb.b { top: 40%; right: -200px; animation: float 22s ease-in-out infinite reverse; }
+
+  @keyframes drift { to { transform: translate(64px, 64px); } }
+  @keyframes float { 50% { transform: translate(60px, 40px) scale(1.08); } }
+  @keyframes rise { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes marquee { to { transform: translateX(-50%); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,255,255,.5); } 50% { box-shadow: 0 0 0 8px rgba(255,255,255,0); } }
+  @keyframes grow { from { transform: scaleY(0); } to { transform: scaleY(1); } }
+  @keyframes blink { 50% { opacity: .2; } }
+
+  /* Nav */
+  nav {
+    position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20;
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+    margin-top: 16px; padding: 12px 14px 12px 22px;
+    border: 1px solid var(--line-2); border-radius: 999px;
+    background: rgba(12,12,12,.7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    animation: rise .8s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .logo { display: inline-flex; align-items: center; gap: 10px; font-weight: 600; letter-spacing: .3em; text-transform: uppercase; font-size: 13px; }
+  .mark { width: 22px; height: 22px; }
+  nav ul { display: flex; gap: 28px; list-style: none; margin: 0; padding: 0; font-size: 14px; color: var(--muted); }
+  nav ul a { transition: color .2s; }
+  nav ul a:hover { color: var(--fg); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 12px 22px; border-radius: 999px;
+    font-size: 14px; font-weight: 500; border: 1px solid var(--line-2); background: transparent; cursor: pointer;
+    transition: background .25s, color .25s, border-color .25s, transform .25s;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-solid { background: var(--accent); color: #080808; border-color: var(--accent); }
+  .btn-solid:hover { background: #dcdcdc; border-color: #dcdcdc; }
+  .btn-ghost:hover { border-color: #555; background: #0c0c0c; }
+  .btn .arr { display: inline-block; transition: transform .25s; }
+  .btn:hover .arr { transform: translateX(3px); }
+  .btn:focus-visible, nav a:focus-visible { outline: 1px solid var(--fg); outline-offset: 3px; }
+
+  /* Hero */
+  .hero { padding-block: 120px 80px; text-align: center; }
+  .hero-logo { display: inline-flex; align-items: center; gap: 14px; margin-bottom: 40px; animation: rise .9s cubic-bezier(.2,.7,.2,1) both; }
+  .hero-logo svg { width: clamp(40px, 6vw, 64px); height: clamp(40px, 6vw, 64px); }
+  .hero-logo span { font-size: clamp(40px, 6vw, 64px); font-weight: 600; letter-spacing: .32em; text-transform: uppercase; line-height: 1; margin-right: -.32em; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 6px 14px 6px 8px; border: 1px solid var(--line-2); border-radius: 999px;
+    font-size: 13px; color: var(--muted); background: var(--surface);
+    animation: rise .8s .1s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .pill b { font-weight: 500; color: var(--bg); background: var(--fg); border-radius: 999px; padding: 2px 9px; font-size: 12px; }
+  .live { width: 7px; height: 7px; border-radius: 50%; background: var(--fg); animation: pulse 2s infinite; }
+  h1 {
+    font-size: clamp(54px, 10.5vw, 156px);
+    line-height: .9; letter-spacing: -.055em; font-weight: 600;
+    margin: 32px auto 32px; max-width: 13ch; text-wrap: balance;
+    animation: rise .9s .25s cubic-bezier(.2,.7,.2,1) both;
+  }
+  h1 .dim { color: var(--dim); }
+  .lead {
+    max-width: 580px; margin: 0 auto 44px; font-size: clamp(18px, 2vw, 21px); color: var(--muted);
+    text-wrap: pretty; animation: rise .9s .45s cubic-bezier(.2,.7,.2,1) both;
+  }
+  .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; animation: rise .9s .6s cubic-bezier(.2,.7,.2,1) both; }
+  .hint { margin-top: 28px; font-size: 13px; color: var(--dim); animation: fadein 1s 0.8s both; }
+
+  /* Example dashboard (labelled as an illustration) */
+  section.block { padding-block: 120px; border-top: 1px solid var(--line); }
+  .eyebrow {
+    font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted);
+    display: inline-flex; align-items: center; gap: 12px; margin: 0 0 24px;
+  }
+  .eyebrow::before { content: ""; width: 24px; height: 1px; background: var(--muted); }
+  h2 { font-size: clamp(38px, 5.4vw, 72px); line-height: .98; letter-spacing: -.045em; font-weight: 600; margin: 0; text-wrap: balance; }
+  h2 .dim { color: var(--dim); }
+  .head { display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px; align-items: end; margin-bottom: 72px; }
+  .head p { color: var(--muted); margin: 0; max-width: 440px; justify-self: end; font-size: 17px; }
+
+  .window {
+    border: 1px solid var(--line-2); border-radius: 22px; background: var(--surface);
+    box-shadow: 0 60px 120px -40px rgba(0,0,0,.9);
+    overflow: hidden; min-width: 0;
+  }
+  .chrome { display: flex; align-items: center; gap: 8px; padding: 14px 18px; border-bottom: 1px solid var(--line); }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #2a2a2a; }
+  .url { margin-left: 16px; font-size: 12px; color: var(--dim); background: #0b0b0b; border: 1px solid var(--line); padding: 4px 14px; border-radius: 8px; }
+  .example { margin-left: auto; font-size: 12px; color: var(--dim); }
+  .dash { display: grid; grid-template-columns: 220px 1fr; min-height: 440px; }
+  .side { border-right: 1px solid var(--line); padding: 22px 16px; display: flex; flex-direction: column; gap: 4px; }
+  .side span { font-size: 14px; color: var(--muted); padding: 9px 12px; border-radius: 8px; }
+  .side span.on { background: #161616; color: var(--fg); }
+  .main { padding: 26px; display: grid; gap: 18px; min-width: 0; }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .kpi { border: 1px solid var(--line); border-radius: 14px; padding: 18px; background: #0c0c0c; min-width: 0; }
+  .kpi small { font-size: 12px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+  .kpi strong { display: block; font-size: 28px; font-weight: 600; letter-spacing: -.03em; margin-top: 6px; color: var(--muted); }
+  .chart { border: 1px solid var(--line); border-radius: 14px; padding: 20px; background: #0c0c0c; min-width: 0; }
+  .chart-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
+  .chart-head h4 { margin: 0; font-size: 15px; font-weight: 500; }
+  .chart-head span { font-size: 12px; color: var(--dim); }
+  .bars { display: flex; align-items: flex-end; gap: 10px; height: 170px; border-bottom: 1px solid var(--line); }
+  .bars div {
+    flex: 1; background: linear-gradient(180deg, #3a3a3a, #161616); border-radius: 6px 6px 0 0;
+    height: var(--h); transform-origin: bottom; animation: grow 1.2s cubic-bezier(.2,.7,.2,1) both;
+    animation-delay: calc(var(--i) * 70ms);
+  }
+  .bars div.hi { background: linear-gradient(180deg, #ffffff, #8a8a8a); }
+
+  /* Feature cards */
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card {
+    position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 20px;
+    background: var(--surface); padding: 34px; min-width: 0;
+    transition: border-color .3s, transform .4s cubic-bezier(.2,.7,.2,1);
+  }
+  .card::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(360px circle at var(--mx, 50%) var(--my, 0%), rgba(255,255,255,.09), transparent 60%);
+    opacity: 0; transition: opacity .4s;
+  }
+  .card:hover { border-color: #3a3a3a; transform: translateY(-4px); }
+  .card:hover::before { opacity: 1; }
+  .card .ico {
+    width: 44px; height: 44px; border: 1px solid var(--line-2); border-radius: 12px;
+    display: grid; place-items: center; margin-bottom: 40px; background: #111;
+  }
+  .card .ico svg { width: 20px; height: 20px; stroke: var(--fg); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+  .card h3 { font-size: 22px; font-weight: 500; margin: 0 0 12px; letter-spacing: -.02em; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+  /* Steps */
+  .steps { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .steps::before { content: ""; position: absolute; top: 24px; left: 8%; right: 8%; height: 1px; background: var(--line-2); }
+  .step { position: relative; text-align: center; min-width: 0; }
+  .step .node {
+    width: 48px; height: 48px; margin: 0 auto 28px; border-radius: 50%;
+    background: var(--bg); border: 1px solid var(--line-2); display: grid; place-items: center;
+    font-size: 15px; font-weight: 500; position: relative; z-index: 1;
+  }
+  .step h3 { font-size: 22px; font-weight: 500; margin: 0 0 10px; letter-spacing: -.02em; }
+  .step p { color: var(--muted); margin: 0 auto; max-width: 300px; font-size: 15px; }
+
+  /* Bento */
+  .bento { display: grid; grid-template-columns: repeat(4, 1fr); grid-auto-rows: minmax(240px, auto); gap: 16px; }
+  .tile {
+    border: 1px solid var(--line); border-radius: 22px; background: var(--surface);
+    padding: 32px; position: relative; overflow: hidden; min-width: 0; display: flex; flex-direction: column;
+  }
+  .tile h3 { font-size: 22px; font-weight: 500; margin: 0 0 10px; letter-spacing: -.02em; }
+  .tile p { color: var(--muted); font-size: 15px; margin: 0; max-width: 420px; }
+  .tile .visual { margin-top: auto; padding-top: 28px; }
+  .span-2 { grid-column: span 2; }
+  .row-2 { grid-row: span 2; }
+
+  .globe {
+    position: absolute; right: -90px; top: -90px; width: 360px; height: 360px; border-radius: 50%;
+    background-image: radial-gradient(circle, #4a4a4a 1.2px, transparent 1.6px);
+    background-size: 22px 22px;
+    -webkit-mask-image: radial-gradient(circle, #000 55%, transparent 72%);
+    mask-image: radial-gradient(circle, #000 55%, transparent 72%);
+    animation: spin 60s linear infinite; opacity: .85;
+  }
+  .ring-s {
+    position: absolute; right: 40px; bottom: 40px; width: 120px; height: 120px; border-radius: 50%;
+    border: 1px dashed #3a3a3a; animation: spin 24s linear infinite;
+  }
+  .ring-s::after { content: ""; position: absolute; top: -4px; left: 50%; width: 8px; height: 8px; border-radius: 50%; background: var(--fg); }
+
+  .auto { display: grid; gap: 10px; }
+  .auto-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: #0b0b0b; font-size: 14px; }
+  .auto-row small { display: block; color: var(--dim); font-size: 12px; }
+  .toggle {
+    width: 40px; height: 22px; border-radius: 999px; border: 1px solid var(--line-2); background: #151515; position: relative; cursor: pointer; flex: none;
+    transition: background .25s;
+  }
+  .toggle::after {
+    content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #666;
+    transition: transform .25s, background .25s;
+  }
+  .toggle[aria-checked="true"] { background: var(--fg); border-color: var(--fg); }
+  .toggle[aria-checked="true"]::after { transform: translateX(18px); background: #080808; }
+
+  .shield { width: 84px; height: 84px; border: 1px solid var(--line-2); border-radius: 22px; display: grid; place-items: center; background: #0b0b0b; }
+  .shield svg { width: 36px; height: 36px; stroke: var(--fg); fill: none; stroke-width: 1.6; stroke-linejoin: round; }
+  .checks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+  .checks span { font-size: 12px; color: var(--muted); border: 1px solid var(--line-2); border-radius: 999px; padding: 5px 12px; }
+
+  /* Early access */
+  .final { position: relative; overflow: hidden; border: 1px solid var(--line-2); border-radius: 32px; padding: clamp(56px, 8vw, 110px) clamp(24px, 6vw, 80px); text-align: center; background: radial-gradient(ellipse at 50% 0%, #1c1c1c, #070707 70%); }
+  .final h2 { max-width: 16ch; margin: 0 auto 28px; }
+  .final .lead { margin: 0 auto 44px; }
+  .final .ring-big { position: absolute; left: 50%; top: 50%; width: 560px; height: 560px; margin: -280px 0 0 -280px; border: 1px solid #1f1f1f; border-radius: 50%; animation: spin 90s linear infinite; pointer-events: none; }
+
+  footer { border-top: 1px solid var(--line); margin-top: 120px; padding-block: 40px; color: var(--dim); font-size: 13px; }
+  footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+
+  @media (max-width: 960px) {
+    nav ul { display: none; }
+    .head { grid-template-columns: 1fr; gap: 24px; }
+    .head p { justify-self: start; }
+    .cards { grid-template-columns: 1fr; }
+    .bento { grid-template-columns: 1fr 1fr; }
+    .span-2 { grid-column: span 2; }
+    .dash { grid-template-columns: 1fr; }
+    .side { display: none; }
+    .steps { grid-template-columns: 1fr; gap: 40px; }
+    .steps::before { display: none; }
+  }
+  @media (max-width: 560px) {
+    .bento { grid-template-columns: 1fr; }
+    .span-2 { grid-column: span 1; }
+    .kpis { grid-template-columns: 1fr; }
+    .btn { padding: 11px 18px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<div class="ambient" aria-hidden="true">
+  <div class="orb a"></div>
+  <div class="orb b"></div>
+</div>
+
+<div class="wrap">
+  <nav>
+    <a class="logo" href="#top" aria-label="Mink home">
+      <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19 L3 5 L12 13 L21 5 L21 19" fill="none" stroke="#f4f4f4" stroke-width="2" stroke-linejoin="round"/></svg>
+      Mink
+    </a>
+    <ul>
+      <li><a href="#product">Preview</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#start">Early access</a></li>
+    </ul>
+    <a class="btn btn-solid" href="#start">Early access <span class="arr">→</span></a>
+  </nav>
+
+  <header class="hero" id="top">
+    <div class="hero-logo" aria-label="Mink">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 19 L3 5 L12 13 L21 5 L21 19" fill="none" stroke="#f4f4f4" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      <span>Mink</span>
+    </div>
+    <div class="pill"><span class="live" aria-hidden="true"></span> <b>Preview</b> Not yet launched</div>
+    <h1>Work <span class="dim">without</span> the noise.</h1>
+    <p class="lead">Mink is a workspace in development that aims to bring your data, your team and your decisions into one calm, precise place.</p>
+    <div class="actions">
+      <a class="btn btn-solid" href="#start">Join the early access list <span class="arr">→</span></a>
+      <a class="btn btn-ghost" href="#product">See the preview</a>
+    </div>
+    <p class="hint">Illustrations below are examples, not real customer data.</p>
+  </header>
+
+  <section class="block" id="product" style="border-top:0">
+    <div class="head">
+      <h2>A first look <span class="dim">at the workspace.</span></h2>
+      <p>This is an illustration of how Mink could look. The figures are placeholders.</p>
+    </div>
+
+    <div class="window" role="region" aria-label="Example dashboard">
+      <div class="chrome">
+        <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+        <span class="url">mink.example / overview</span>
+        <span class="example">Example data</span>
+      </div>
+      <div class="dash">
+        <aside class="side">
+          <span class="on">Overview</span>
+          <span>Projects</span>
+          <span>Automations</span>
+          <span>Reports</span>
+          <span>Team</span>
+          <span>Settings</span>
+        </aside>
+        <div class="main">
+          <div class="kpis">
+            <div class="kpi"><small>Revenue</small><strong>—</strong></div>
+            <div class="kpi"><small>Active users</small><strong>—</strong></div>
+            <div class="kpi"><small>Conversion</small><strong>—</strong></div>
+          </div>
+          <div class="chart">
+            <div class="chart-head"><h4>Monthly activity</h4><span>Example</span></div>
+            <div class="bars" id="bars"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="features">
+    <div class="head">
+      <div>
+        <p class="eyebrow">Planned features</p>
+        <h2>Everything in one place. <span class="dim">Nothing in the way.</span></h2>
+      </div>
+      <p>The goal is one system in place of a stack of scattered tools. Features are still being designed and may change.</p>
+    </div>
+
+    <div class="cards">
+      <article class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6"/><path d="M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg></div>
+        <h3>Connected data</h3>
+        <p>Bring your sources into one searchable workspace.</p>
+      </article>
+      <article class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c.6-3.2 3-5 6-5s5.4 1.8 6 5"/><path d="M15 15c2.4 0 4.4 1.4 5 4"/></svg></div>
+        <h3>Team workspaces</h3>
+        <p>Shared views with roles that match how your team is organized.</p>
+      </article>
+      <article class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg></div>
+        <h3>Reporting</h3>
+        <p>Dashboards built to answer questions quickly.</p>
+      </article>
+      <article class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <h3>Security</h3>
+        <p>Access controls and audit trails are part of the core design.</p>
+      </article>
+      <article class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg></div>
+        <h3>Automations</h3>
+        <p>Turn repeated tasks into rules you can review and switch off.</p>
+      </article>
+      <article class="card">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M9 7H6a3 3 0 000 6h3"/><path d="M15 7h3a3 3 0 010 6h-3"/><path d="M8 10h8"/></svg></div>
+        <h3>Integrations</h3>
+        <p>Connections to the tools your team already uses.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="block" id="how">
+    <div class="head">
+      <div>
+        <p class="eyebrow">Approach</p>
+        <h2>Three steps. <span class="dim">Then it runs itself.</span></h2>
+      </div>
+      <p>How Mink is meant to work once it is available.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="node">01</div>
+        <h3>Connect</h3>
+        <p>Link your existing tools so your data lives in one place.</p>
+      </div>
+      <div class="step">
+        <div class="node">02</div>
+        <h3>Configure</h3>
+        <p>Set up roles, dashboards and the routine tasks you want automated.</p>
+      </div>
+      <div class="step">
+        <div class="node">03</div>
+        <h3>Review</h3>
+        <p>Invite the team and check what the automations are doing, at any time.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="bento">
+    <div class="head">
+      <div>
+        <p class="eyebrow">Ideas in progress</p>
+        <h2>Built for depth. <span class="dim">Designed for calm.</span></h2>
+      </div>
+      <p>Early concepts. None of these are available yet.</p>
+    </div>
+
+    <div class="bento">
+      <div class="tile span-2 row-2">
+        <h3>Automations you can read</h3>
+        <p>Choose a trigger, add a condition, pick an action. Turn any rule on or off.</p>
+        <div class="visual auto">
+          <div class="auto-row"><span>When a task is marked done<small>Notify the project owner</small></span><button class="toggle" role="switch" aria-checked="true" aria-label="Toggle first example rule"></button></div>
+          <div class="auto-row"><span>Every Monday morning<small>Send a summary to the team</small></span><button class="toggle" role="switch" aria-checked="true" aria-label="Toggle second example rule"></button></div>
+          <div class="auto-row"><span>When a file is overdue<small>Remind the assignee</small></span><button class="toggle" role="switch" aria-checked="false" aria-label="Toggle third example rule"></button></div>
+        </div>
+      </div>
+
+      <div class="tile span-2">
+        <div class="globe" aria-hidden="true"></div>
+        <h3>Data where you need it</h3>
+        <p>Options for choosing where your data is stored are planned.</p>
+      </div>
+
+      <div class="tile">
+        <div class="shield" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg></div>
+        <h3 style="margin-top:28px">Secure by design</h3>
+        <p>Roles, audit trails and single sign-on are on the roadmap.</p>
+        <div class="checks"><span>Roles</span><span>Audit trail</span><span>SSO</span></div>
+      </div>
+
+      <div class="tile">
+        <h3>Quick search</h3>
+        <p>Find records and files across connected sources.</p>
+        <div class="visual">
+          <div class="auto-row" style="font-size:13px"><span style="color:var(--muted)">Search…</span><span style="color:var(--dim)">⌘ K</span></div>
+        </div>
+      </div>
+
+      <div class="tile span-2">
+        <div class="ring-s" aria-hidden="true"></div>
+        <h3>Focus mode</h3>
+        <p>Hide notifications and work through one task at a time.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" id="start">
+    <div class="final">
+      <div class="ring-big" aria-hidden="true"></div>
+      <p class="eyebrow" style="position:relative">Early access</p>
+      <h2 style="position:relative">Quiet software for <span class="dim">serious work.</span></h2>
+      <p class="lead" style="position:relative">Mink is not available yet. Leave your contact details with the team to hear when it opens.</p>
+      <div class="actions" style="position:relative">
+        <a class="btn btn-solid" href="#start">Join the waitlist <span class="arr">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <span>© 2026 Mink. In development.</span>
+      <span>Privacy · Terms</span>
+    </div>
+  </footer>
+</div>
+
+<script>
+  // Bar chart in the example panel (decorative)
+  (function () {
+    var wrap = document.getElementById('bars');
+    if (!wrap) return;
+    var values = [42, 58, 49, 71, 64, 88, 76, 95, 82, 104, 91, 118];
+    var max = Math.max.apply(null, values);
+    values.forEach(function (v, i) {
+      var d = document.createElement('div');
+      d.style.setProperty('--h', Math.round((v / max) * 100) + '%');
+      d.style.setProperty('--i', i);
+      if (i === values.length - 1) d.className = 'hi';
+      wrap.appendChild(d);
+    });
+  })();
+
+  // Spotlight that follows the cursor on feature cards
+  (function () {
+    document.querySelectorAll('.card').forEach(function (card) {
+      card.addEventListener('pointermove', function (e) {
+        var r = card.getBoundingClientRect();
+        card.style.setProperty('--mx', (e.clientX - r.left) + 'px');
+        card.style.setProperty('--my', (e.clientY - r.top) + 'px');
+      });
+    });
+  })();
+
+  // Automation toggles
+  (function () {
+    document.querySelectorAll('[role="switch"]').forEach(function (sw) {
+      sw.addEventListener('click', function () {
+        sw.setAttribute('aria-checked', sw.getAttribute('aria-checked') === 'true' ? 'false' : 'true');
+      });
+    });
+  })();
+</script>
+
+</body></html>
